@@ -1,15 +1,49 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import reportWebVitals from "./reportWebVitals";
+
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+// Bootstrap CSS
+import "bootstrap/dist/css/bootstrap.min.css";
+// Bootstrap Bundle JS
+import "bootstrap/dist/js/bootstrap.bundle.min";
+
+import { AuthProvider } from "./contexts/Auth";
+import withAuthenticatedScreen from "./hoc/withAuthenticatedScreen";
+import LogIn from "./pages/LogIn/LogIn";
+import Main from "./pages/Main/Main";
+import ProductList from "./pages/ProductList/ProductList";
+
+const WrappedMain = withAuthenticatedScreen(Main);
+const WrappedProductList = withAuthenticatedScreen(ProductList);
+
+const router = createBrowserRouter([
+  {
+    path: "",
+    element: <WrappedMain />,
+    children: [
+      {
+        path: "product-list",
+        element: <WrappedProductList />,
+      },
+    ],
+  },
+  {
+    path: "login",
+    element: <LogIn />,
+  },
+]);
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
+  document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 );
 
