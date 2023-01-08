@@ -13,5 +13,5 @@ code {
 }
 
 .form-error {
-  color: red;
+  color: red !important;
 }

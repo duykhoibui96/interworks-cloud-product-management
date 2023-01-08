@@ -7,6 +7,8 @@ type AuthContextProps = {
   clearToken: Function;
 };
 
+const TOKEN = "access_token";
+
 export const AuthContext = createContext<AuthContextProps>({} as any);
 
 export const AuthProvider: React.FC<{ children: any }> = ({ children }) => {
@@ -14,7 +16,7 @@ export const AuthProvider: React.FC<{ children: any }> = ({ children }) => {
   const [token, setToken] = useState<string>("");
 
   useEffect(() => {
-    const token = localStorage.getItem("TOKEN");
+    const token = localStorage.getItem(TOKEN);
     if (token) {
       setToken(token);
     }
@@ -28,7 +30,7 @@ export const AuthProvider: React.FC<{ children: any }> = ({ children }) => {
       isAuthenticated: !!token,
       saveToken: (token: string) => {
         setToken(token);
-        localStorage.setItem("TOKEN", token);
+        localStorage.setItem(TOKEN, token);
       },
       clearToken: () => {
         setToken("");
