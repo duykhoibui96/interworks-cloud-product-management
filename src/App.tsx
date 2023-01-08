@@ -43,9 +43,7 @@ function NoMatch() {
   return (
     <div>
       <h2>Nothing to see here!</h2>
-      <p>
-        <Link to="/">Go to the home page</Link>
-      </p>
+      <p></p>
     </div>
   );
 }
@@ -107,7 +105,9 @@ const Layout: React.FC<LayoutProps> = ({
           )}
         </Container>
       </Navbar>
-      <Outlet />
+      <div style={{ padding: 50 }}>
+        <Outlet />
+      </div>
     </div>
   );
 };
