@@ -14,11 +14,16 @@ import { API_BASE_URL, PROXY_URL, MAX_ITEMS_PER_PAGE } from "../../config";
 import Pagination from "../../components/Pagination/Pagination";
 import { AuthContext } from "../../contexts/Auth";
 import { CustomError } from "../../utils/error";
+import FetchRequestButton from "../../components/FetchRequestButton/FetchRequestButton";
 
 enum SortingType {
   ASCENDING = "ASCENDING",
   DESCENDING = "DESCENDING",
   NONE = "NONE",
+}
+
+function roundNumber(num: number) {
+  return Math.round(num * 100) / 100;
 }
 
 function filterProducts(
@@ -49,8 +54,6 @@ function filterProducts(
     });
   }
 
-  console.log("go here");
-
   return newProducts;
 }
 
@@ -60,7 +63,7 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(MAX_ITEMS_PER_PAGE);
   const [totalPage, setTotalPage] = useState(50);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [searchText, setSearchText] = useState("");
   const [sortingType, setSortingType] = useState<SortingType>(SortingType.NONE);
 
@@ -102,7 +105,6 @@ const ProductList = () => {
         .catch((e) => {
           setIsError(true);
           const errStatus = e.status;
-          console.log(errStatus);
 
           if (errStatus === 401) {
             clearToken();
@@ -141,6 +143,43 @@ const ProductList = () => {
 
   function onChangePageSize(e: any) {
     setPageSize(e.target.value);
+  }
+
+  function onLoadPricing(productId: string) {
+    return fetch(`${PROXY_URL}/api/products/${productId}/pricing`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Target-URL": API_BASE_URL,
+        "X-APi-version": "3",
+      },
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new CustomError(
+          "HTTP status code: " + response.status,
+          response.status
+        );
+      }
+    });
+  }
+
+  function updatePrice(
+    productId: string,
+    monthlyPrice: number,
+    annualPrice: number
+  ) {
+    const productIndex = products.findIndex(({ id }) => id === productId);
+    if (productIndex >= 0) {
+      const newProducts: any[] = [...products];
+      newProducts[productIndex].price = {
+        monthlyPrice: monthlyPrice !== null ? roundNumber(monthlyPrice) : null,
+        annualPrice: annualPrice !== null ? roundNumber(annualPrice) : null,
+      };
+
+      setProducts(newProducts);
+    }
   }
 
   return (
@@ -245,7 +284,7 @@ const ProductList = () => {
           </thead>
           <tbody>
             {filterProducts(searchText, sortingType, products).map(
-              ({ id, code, name }, index) => {
+              ({ id, code, name, price }, index) => {
                 return (
                   <tr key={id}>
                     <td>{index + 1}</td>
@@ -253,7 +292,49 @@ const ProductList = () => {
                     <td>{code}</td>
                     <td>{name}</td>
                     <td>
-                      <Button variant="secondary">View</Button>
+                      {price ? (
+                        price.monthlyPrice !== null &&
+                        price.annualPrice !== null ? (
+                          <span>
+                            Monthly: <b>{price.monthlyPrice} A$</b> - Annual:{" "}
+                            <b>{price.annualPrice} A$</b>
+                          </span>
+                        ) : price.monthlyPrice !== null ? (
+                          <span>
+                            Monthly: <b>{price.monthlyPrice} A$</b>
+                          </span>
+                        ) : (
+                          <span>
+                            Annual: <b>{price.annualPrice} A$</b>
+                          </span>
+                        )
+                      ) : (
+                        <FetchRequestButton
+                          btnText="View"
+                          request={() => onLoadPricing(id)}
+                          onData={({ prices = [] }) => {
+                            const aud = prices.find(
+                              ({ currency }: { currency: string }) =>
+                                currency === "AUD"
+                            );
+                            if (aud) {
+                              const monthlyPrice = aud.units.find(
+                                ({ name }: { name: string }) => name === "Month"
+                              );
+                              const annualPrice = aud.units.find(
+                                ({ name }: { name: string }) =>
+                                  name === "Annual"
+                              );
+
+                              updatePrice(
+                                id,
+                                monthlyPrice ? monthlyPrice.sellPrice : null,
+                                annualPrice ? annualPrice.sellPrice : null
+                              );
+                            }
+                          }}
+                        />
+                      )}
                     </td>
                     <td>
                       <Button

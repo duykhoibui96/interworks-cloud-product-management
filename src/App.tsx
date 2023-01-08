@@ -139,7 +139,6 @@ const AccessTokenModal: React.FC<AccessTokenModalProps> = ({
 
   function copyToClipboard() {
     const currentText = accessTokenRef?.current as any;
-    console.log("currentText", currentText);
     if (currentText) {
       currentText.select();
       document.execCommand("copy");
